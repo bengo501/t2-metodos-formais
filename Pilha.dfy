@@ -1,3 +1,15 @@
+// =============================================================================
+//  Métodos Formais para Computação  -  Trabalho T2
+//  Prof. Júlio Machado  -  PUCRS / Bacharelado em Ciência da Computação
+//
+//  Tipo Abstrato de Dados: PILHA (Stack) sem limite de tamanho,
+//  com implementação concreta baseada em arrays.
+//
+//  Integrantes do grupo:
+//    - Bernardo Klein
+//    - Giovana Raupp
+// =============================================================================
+
 class Pilha {
   // ------------------------- Representação concreta 
   var dados: array<int>   // array de apoio que armazena os elementos
