@@ -142,63 +142,54 @@ class Pilha {
   }
 
   // =========================================================================
-  //  inverter()  -  inverte a ordem dos elementos da pilha (in-place)
-  method inverter()
+  //  inverter()  -  RETORNA uma NOVA pilha com a ordem invertida.
+  //  NÃO altera esta pilha (sem mutação).
+  method inverter() returns (rev: Pilha)
     requires Valid()
-    modifies Repr
-    ensures Valid() && fresh(Repr - old(Repr))
-    ensures |elementos| == |old(elementos)|
+    ensures rev.Valid() && fresh(rev.Repr)
+    ensures unchanged(this)                      // esta pilha permanece intacta
+    ensures |rev.elementos| == |elementos|
     ensures forall k :: 0 <= k < |elementos| ==>
-              elementos[k] == old(elementos)[|old(elementos)| - 1 - k]
+              rev.elementos[k] == elementos[|elementos| - 1 - k]
   {
-    ghost var s := elementos;   // == old(elementos) == dados[..tamPilha]
+    var n := tamPilha;
+    var novo := new int[n];
     var i := 0;
-    var j := tamPilha - 1;
-    while i < j
-      invariant 0 <= i <= tamPilha
-      invariant -1 <= j < tamPilha
-      invariant i + j == tamPilha - 1
-      invariant tamPilha == |s|
-      invariant this in Repr && dados in Repr
-      invariant 0 <= tamPilha <= dados.Length
-      // pontas já invertidas:
-      invariant forall k :: 0 <= k < i ==> dados[k] == s[tamPilha - 1 - k]
-      invariant forall k :: j < k < tamPilha ==> dados[k] == s[tamPilha - 1 - k]
-      // miolo ainda na ordem original:
-      invariant forall k :: i <= k <= j ==> dados[k] == s[k]
-      modifies dados
-      decreases j - i
+    while i < n
+      invariant 0 <= i <= n
+      invariant n == tamPilha
+      invariant n <= dados.Length
+      invariant novo.Length == n
+      invariant forall k :: 0 <= k < i ==> novo[k] == dados[n - 1 - k]
+      modifies novo
+      decreases n - i
     {
-      dados[i], dados[j] := dados[j], dados[i];
+      novo[i] := dados[n - 1 - i];
       i := i + 1;
-      j := j - 1;
     }
-    elementos := dados[..tamPilha];
+    // a nova pilha recebe o array já invertido
+    rev := new Pilha();
+    rev.dados := novo;
+    rev.tamPilha := n;
+    rev.elementos := novo[..n];
+    rev.Repr := {rev, novo};
   }
 
   // =========================================================================
-  //  empilharSobre(outra)  -  empilha a pilha `outra` SOBRE esta pilha.
-  //  Os elementos de `outra` são colocados no topo desta, preservando a ordem
-  //  interna de `outra` (o topo de `outra` torna-se o novo topo do resultado).
-  //  A pilha `outra` permanece inalterada.
-  //      resultado.elementos == this.elementos ++ outra.elementos
-
-  method empilharSobre(outra: Pilha)
+  //  empilharSobre(outra)  -  RETORNA uma NOVA pilha resultante de empilhar
+  //  `outra` SOBRE esta pilha (esta embaixo, `outra` em cima; o topo de `outra`
+  //  vira o topo do resultado). NÃO altera nenhuma das duas pilhas.
+  //      nova.elementos == this.elementos + outra.elementos
+  method empilharSobre(outra: Pilha) returns (nova: Pilha)
     requires Valid() && outra.Valid()
-    requires outra != this
-    requires Repr !! outra.Repr        // pilhas disjuntas (sem aliasing)
-    modifies Repr
-    ensures Valid() && fresh(Repr - old(Repr))
-    ensures elementos == old(elementos) + outra.elementos
-    ensures unchanged(outra)           // `outra` não é modificada
-    ensures outra.Valid()
+    ensures nova.Valid() && fresh(nova.Repr)
+    ensures nova.elementos == elementos + outra.elementos
+    ensures unchanged(this) && unchanged(outra)  // operandos intactos
   {
-    ghost var s1 := elementos;          // == dados[..tamPilha]
-    ghost var s2 := outra.elementos;    // == outra.dados[..outra.tamPilha]
     var total := tamPilha + outra.tamPilha;
     var novo := new int[total];
 
-    // copia os elementos desta pilha
+    // copia os elementos desta pilha (base)
     var k := 0;
     while k < tamPilha
       invariant 0 <= k <= tamPilha
@@ -227,14 +218,15 @@ class Pilha {
       m := m + 1;
     }
 
-    assert novo[..tamPilha] == s1;
-    assert novo[tamPilha..total] == s2;
+    assert novo[..tamPilha] == dados[..tamPilha];
+    assert novo[tamPilha..total] == outra.dados[..outra.tamPilha];
     assert novo[..total] == novo[..tamPilha] + novo[tamPilha..total];
 
-    dados := novo;
-    tamPilha := total;
-    elementos := s1 + s2;
-    Repr := {this, dados};
+    nova := new Pilha();
+    nova.dados := novo;
+    nova.tamPilha := total;
+    nova.elementos := dados[..tamPilha] + outra.dados[..outra.tamPilha];
+    nova.Repr := {nova, novo};
   }
 }
 
@@ -274,37 +266,40 @@ method Main()
   p.empilhar(40);
   assert p.elementos == [10, 20, 40];
 
-  // ---- inverter ----
-  p.inverter();
-  assert p.elementos == [40, 20, 10];
-  assert p.topo() == 10;
+  // ---- inverter: retorna NOVA pilha, sem alterar a original ----
+  var pInv := p.inverter();
+  assert p.elementos == [10, 20, 40];      // original permanece intacta
+  assert pInv.elementos == [40, 20, 10];   // nova, invertida
+  assert pInv.topo() == 10;
+  assert pInv.tamanho() == 3;
 
-  // ---- empilhar uma pilha sobre outra ----
+  // ---- empilhar uma pilha sobre outra: retorna NOVA, sem alterar nenhuma ----
   var q := new Pilha();
   q.empilhar(1);
   q.empilhar(2);
   assert q.elementos == [1, 2];
 
-  // p = [40,20,10] ; q = [1,2]  =>  p.empilharSobre(q) == [40,20,10,1,2]
-  p.empilharSobre(q);
-  assert p.elementos == [40, 20, 10, 1, 2];
-  assert p.tamanho() == 5;
-  assert p.topo() == 2;
-  assert q.elementos == [1, 2];     // `q` permanece inalterada
+  // base = pInv = [40,20,10] ; topo = q = [1,2]  =>  nova == [40,20,10,1,2]
+  var r := pInv.empilharSobre(q);
+  assert pInv.elementos == [40, 20, 10];   // operando intacto
+  assert q.elementos == [1, 2];            // operando intacto
+  assert r.elementos == [40, 20, 10, 1, 2];
+  assert r.tamanho() == 5;
+  assert r.topo() == 2;
 
-  // ---- desempilhando tudo, recuperamos a ordem esperada ----
-  var a1 := p.desempilhar();   // 2
-  assert a1 == 2 && p.elementos == [40, 20, 10, 1];
-  var a2 := p.desempilhar();   // 1
-  assert a2 == 1 && p.elementos == [40, 20, 10];
-  var a3 := p.desempilhar();   // 10
-  assert a3 == 10 && p.elementos == [40, 20];
-  var a4 := p.desempilhar();   // 20
-  assert a4 == 20 && p.elementos == [40];
-  var a5 := p.desempilhar();   // 40
-  assert a5 == 40 && p.elementos == [];
+  // ---- desempilhando a nova pilha recuperamos a ordem esperada ----
+  var a1 := r.desempilhar();   // 2
+  assert a1 == 2 && r.elementos == [40, 20, 10, 1];
+  var a2 := r.desempilhar();   // 1
+  assert a2 == 1 && r.elementos == [40, 20, 10];
+  var a3 := r.desempilhar();   // 10
+  assert a3 == 10 && r.elementos == [40, 20];
+  var a4 := r.desempilhar();   // 20
+  assert a4 == 20 && r.elementos == [40];
+  var a5 := r.desempilhar();   // 40
+  assert a5 == 40 && r.elementos == [];
   assert [a1, a2, a3, a4, a5] == [2, 1, 10, 20, 40];
-  assert p.vazia();
+  assert r.vazia();
 
   print "Pilha: todas as assercoes foram verificadas estaticamente com sucesso.\n";
 }

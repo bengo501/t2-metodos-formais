@@ -1,0 +1,12 @@
+# Artefatos gerados pela compilação do Dafny
+build/
+
+# Caso algo seja gerado na raiz por engano
+*.cs
+*.dll
+*.exe
+*.pdb
+*.deps.json
+*.runtimeconfig.json
+*.csproj
+obj/

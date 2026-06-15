@@ -1,0 +1,33 @@
+t2 - metodos formais - comandos
+================================
+atalho: basta dar duplo-clique nos .bat
+- instalar_dependencias.bat -> instala tudo (Dafny + Z3)
+- verificar_e_executar.bat  -> verifica e executa o Pilha.dfy
+
+----------------------------------------------------------
+ 1) instalacao das dependencias (uma vez por maquina)
+pre-requisito: .NET 8 SDK
+https://dotnet.microsoft.com/download/dotnet/8.0
+
+instalar o Dafny 4.11.0:
+dotnet tool install --global Dafny --version 4.11.0
+
+baixar o Z3 4.12.1 (Windows x64) e colocar onde o Dafny procura:
+link: https://github.com/Z3Prover/z3/releases/download/z3-4.12.1/z3-4.12.1-x64-win.zip
+extrair o zip e copiar o "z3.exe" para o caminho abaixo,
+renomeando para "z3-4.12.1.exe":
+%USERPROFILE%\.dotnet\tools\.store\dafny\4.11.0\dafny\4.11.0\tools\net8.0\any\z3\bin\z3-4.12.1.exe
+
+----------------------------------------------------------
+ 2) verificacao e execucao
+verificar (prova formal):
+dafny verify Pilha.dfy
+
+executar (compila e roda o Main):
+dafny run Pilha.dfy
+----------------------------------------------------------
+alternativa sem instalar o Z3 no Dafny
+(caso prefira apontar o caminho do z3.exe manualmente):
+----------------------------------------------------------
+dafny verify Pilha.dfy --solver-path "C:\caminho\para\z3.exe"
+dafny run    Pilha.dfy --solver-path "C:\caminho\para\z3.exe"
