@@ -1,26 +1,19 @@
-// =============================================================================
-//  Métodos Formais para Computação  -  Trabalho T2
-//  Prof. Júlio Machado  -  PUCRS / Bacharelado em Ciência da Computação
-//
-//  Tipo Abstrato de Dados: PILHA (Stack) sem limite de tamanho,
-//  com implementação concreta baseada em arrays.
-//
-//  Integrantes do grupo:
+//  Métodos Formais para Computação - T2
+//  Prof. Júlio Machado 
 //    - Bernardo Klein
 //    - Giovana Raupp
-// =============================================================================
 
 class Pilha {
-  // ------------------------- Representação concreta 
+  // -------------representação concreta 
   var dados: array<int>   // array de apoio que armazena os elementos
   var tamPilha: int       // nº de elementos em uso (topo em dados[tamPilha-1])
 
-  // -------------------- Representação abstrata (ghost) 
-  ghost var elementos: seq<int>   // coleção abstrata de elementos da pilha
+  // --------------representação abstrata (ghost) 
+  ghost var elementos: seq<int>   // colecao abstrata de elementos da pilha
   ghost var Repr: set<object>     // conjunto de objetos que compõem a pilha
-                                  // (informação necessária para o framing)
+                                  // (informacao necessária para o framing)
 
-  // --------------------------- Invariante de classe 
+  // ---------invariante de classe 
   // Predicado que amarra a representação concreta (array + contador) à
   // representação abstrata (sequência `elementos`).
   ghost predicate Valid()
@@ -33,8 +26,8 @@ class Pilha {
     elementos == dados[..tamPilha]
   }
 
-  // =========================================================================
-  //  CONSTRUTOR  -  cria uma pilha vazia
+  // ==========================
+  //  construtor  -  cria uma pilha vazia
   constructor ()
     ensures Valid() && fresh(Repr)
     ensures elementos == []
@@ -45,8 +38,9 @@ class Pilha {
     Repr := {this, dados};
   }
 
-  // =========================================================================
-  //  vazia()  -  consulta se a pilha está vazia
+  // ======================================
+  //  vazia()  
+  // consulta se a pilha esta vazia
   predicate vazia()
     requires Valid()
     reads this, Repr
@@ -55,8 +49,9 @@ class Pilha {
     tamPilha == 0
   }
 
-  // =========================================================================
-  //  tamanho()  -  nº de elementos armazenados
+  // =========================================
+  //  tamanho()  
+  // numero de elementos armazenados
   function tamanho(): int
     requires Valid()
     reads this, Repr
@@ -65,8 +60,9 @@ class Pilha {
     tamPilha
   }
 
-  // =========================================================================
-  //  topo()  -  lê o valor do topo SEM removê-lo (pilha não vazia)
+  // =========================================
+  //  topo()  
+  // le o valor do topo sem remover (pilha não vazia)
   function topo(): int
     requires Valid()
     requires |elementos| > 0
@@ -77,7 +73,8 @@ class Pilha {
   }
 
   // =========================================================================
-  //  aumentarCapacidade()  -  método auxiliar: realoca `dados` num array maior
+  //  aumentarCapacidade() 
+  // metodo auxiliar: realoca `dados` num array maior
   //  (garante que a pilha não tenha limite de tamanho)
   method aumentarCapacidade()
     requires Valid()
@@ -110,7 +107,8 @@ class Pilha {
   }
 
   // =========================================================================
-  //  empilhar(x)  -  adiciona um novo elemento no TOPO da pilha
+  //  empilhar(x)  
+  // add um novo elemento no topo da pilha
   method empilhar(x: int)
     requires Valid()
     modifies Repr
@@ -176,9 +174,10 @@ class Pilha {
   }
 
   // =========================================================================
-  //  empilharSobre(outra)  -  RETORNA uma NOVA pilha resultante de empilhar
-  //  `outra` SOBRE esta pilha (esta embaixo, `outra` em cima; o topo de `outra`
-  //  vira o topo do resultado). NÃO altera nenhuma das duas pilhas.
+  //  empilharSobre(outra)  
+  // retorna uma nova pilha resultante de empilhar
+  //  `outra` sobre esta pilha (esta embaixo, `outra` em cima; o topo de `outra`
+  //  vira o topo do resultado). nao altera nenhuma das duas pilhas.
   //      nova.elementos == this.elementos + outra.elementos
   method empilharSobre(outra: Pilha) returns (nova: Pilha)
     requires Valid() && outra.Valid()
@@ -230,19 +229,19 @@ class Pilha {
   }
 }
 
-// =============================================================================
-//  MÉTODO Main  -  demonstração de uso + testes (estilo teste unitário) cuja
-//  corretude é VERIFICADA estaticamente pelo Dafny através de assert.
+// ==============================================
+//  metodo main  -  demonstracao de uso + testes
+//  verificacao pelo Dafny atraves de assert.
 
 method Main()
 {
-  // ---- pilha recém-criada está vazia ----
+  // ---- pilha recém criada esta vazia
   var p := new Pilha();
   assert p.vazia();
   assert p.tamanho() == 0;
   assert p.elementos == [];
 
-  // ---- empilhar ----
+  // ---- empilhar 
   p.empilhar(10);
   p.empilhar(20);
   p.empilhar(30);
@@ -251,14 +250,14 @@ method Main()
   assert p.topo() == 30;
   assert p.elementos == [10, 20, 30];
 
-  // ---- desempilhar (remove o topo) ----
+  // ---- desempilhar (remove o topo) 
   var x := p.desempilhar();
   assert x == 30;
   assert p.topo() == 20;
   assert p.tamanho() == 2;
   assert p.elementos == [10, 20];
 
-  // ---- topo() não remove ----
+  // ---- topo() nao remove 
   var t := p.topo();
   assert t == 20;
   assert p.tamanho() == 2;
@@ -266,14 +265,14 @@ method Main()
   p.empilhar(40);
   assert p.elementos == [10, 20, 40];
 
-  // ---- inverter: retorna NOVA pilha, sem alterar a original ----
+  // ---- inverter: retorna nova pilha, sem alterar a original 
   var pInv := p.inverter();
   assert p.elementos == [10, 20, 40];      // original permanece intacta
   assert pInv.elementos == [40, 20, 10];   // nova, invertida
   assert pInv.topo() == 10;
   assert pInv.tamanho() == 3;
 
-  // ---- empilhar uma pilha sobre outra: retorna NOVA, sem alterar nenhuma ----
+  // ---- empilhar uma pilha sobre outra: retorna nova, sem alterar nenhuma 
   var q := new Pilha();
   q.empilhar(1);
   q.empilhar(2);
@@ -287,7 +286,7 @@ method Main()
   assert r.tamanho() == 5;
   assert r.topo() == 2;
 
-  // ---- desempilhando a nova pilha recuperamos a ordem esperada ----
+  // ---- desempilhando a nova pilha recuperamos a ordem esperada 
   var a1 := r.desempilhar();   // 2
   assert a1 == 2 && r.elementos == [40, 20, 10, 1];
   var a2 := r.desempilhar();   // 1
@@ -301,5 +300,5 @@ method Main()
   assert [a1, a2, a3, a4, a5] == [2, 1, 10, 20, 40];
   assert r.vazia();
 
-  print "Pilha: todas as assercoes foram verificadas estaticamente com sucesso.\n";
+  print "pilha: todas as assercoes foram verificadas estaticamente com sucesso.\n";
 }
